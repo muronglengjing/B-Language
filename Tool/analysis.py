@@ -25,7 +25,7 @@ def number(text):
             elif num == "九":
                 i += 9
             elif num == "十":
-                i *= 10
+                i += 10
             elif num == "百":
                 i *= 100
             elif num == "千":
@@ -46,13 +46,7 @@ def number(text):
         text = re.sub("七", "7", text)
         text = re.sub("八", "8", text)
         text = re.sub("九", "9", text)
-    return text
-
-
-
-
-
-
+    text = re.sub("点", ".", text)
     return text
 
 
@@ -66,7 +60,8 @@ class Analysis():
         self.name_function = 0
         self.name_to_class = 0
         self.class_name = ""
-        ["如果", "类", "能"]
+        self.fun_name = ""
+        self.pace = []
 
     def name(self, type, text):
         if type == 'v':
@@ -89,16 +84,19 @@ class Analysis():
             re.match("如果")
             self.point += 1
             self.name_function
+            self.pace.append(self.name_function)
 
         if re.search("类", text):
             self.class_name = text[re.search(".+类：", text).start():re.search(".+类：", text).end()-2]
+            self.pace.append(self.class_name)
             text = self.point*"\t" + "class {}:".format(self.name("c", self.class_name))
             self.point += 1
             return text
 
         if re.search("能", text):
-            txt = text[re.search("能.+（", text).start()+1:re.search("能.+（", text).end() - 1]
-            text = self.point*"\t" + "def {}:".format(self.name("f", txt))
+            self.fun_name = text[re.search("能.+（", text).start()+1:re.search("能.+（", text).end() - 1]
+            self.pace.append(self.fun_name)
+            text = self.point*"\t" + "def {}:".format(self.name("f", self.fun_name))
             self.point += 1
             return text
 
@@ -107,6 +105,10 @@ class Analysis():
 
         if re.search("有", text):
             text = re.sub("有", ".", text)
+
+        if self.class_name != "":
+            if re.search(self.class_name, text):
+                text = re.sub(self.class_name, "self", text)
 
         text = re.sub("的", ".", text)
         text = re.sub("加", "+", text)
@@ -128,5 +130,12 @@ class Analysis():
         if "。" in text:
             text = re.sub("。", "", text)
             self.point -= 1
+            if self.pace:
+                if self.pace[-1] == self.class_name:
+                    self.pace.remove(self.class_name)
+                    self.class_name = ""
+                elif self.pace[-1] == self.fun_name:
+                    self.pace.remove(self.fun_name)
+                    self.fun_name = ""
 
         return text
